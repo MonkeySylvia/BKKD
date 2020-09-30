@@ -1,0 +1,75 @@
+setwd("/Volumes/Junybug/BKKD")
+GeneCountData <- read.delim("all.combine.cntTable", header = TRUE, sep = "\t", row.names = 1)
+##processes file to make sure that it is in the right format
+GeneCountDataInt <- as.matrix(GeneCountData)
+storage.mode(GeneCountDataInt) = "integer"
+
+GeneCountDataInt2<-GeneCountDataInt[,c(1,3,4,6)]
+GeneCountDataInt3<-GeneCountDataInt[,c(1,4,5,6,8,9)]
+
+##Loading in your design file (see above)
+Design <- read.delim("comsample.txt", header = TRUE, sep = "\t", row.names = 1)
+
+##Loading "DEseq2" software
+library("DESeq2")
+
+##generating a DESeq dataset matrix object using the counts and design input files
+gdds <- DESeqDataSetFromMatrix(countData = GeneCountDataInt2, colData = Design, design = ~ condition)
+
+##performing DE analysis
+gdds_de <- DESeq(gdds)
+
+##generating normalized counts for each gene or transcript for plots
+dds_rld <- rlog(gdds)
+
+##generating a results object from DE analysis (see above)
+dds_res <- results(gdds_de)
+
+##generating subset of DE results for individual comparisons (for me, the "genotype" design, comparing MVKKO vs MVWT; could also be something like "tissue" design comparing liver vs kidney or liver vs testis [whatever is labeled in your file]")
+res <- results(gdds_de, contrast=c("condition","A","B"),alpha=0.05)
+
+##tells you total # of genes DE at adj. p < 0.1 level
+summary(dds_res)
+
+##plots PCA of samples using the groups specified in your design file (for me, genotype and serum)
+plotPCA(dds_rld, intgroup=c("condition"))
+
+#my heatmap
+library("pheatmap")
+sampleDists <- dist(t(assay(dds_rld)))
+library("RColorBrewer")
+sampleDists <- dist(t(assay(dds_rld)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(dds_rld$replicate, vsd$type, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+
+#MA plot
+plotMA(res, ylim=c(-5,5))
+
+
+
+##loading in necessary software to generate sample distance heatmaps
+library("RColorBrewer")
+library("gplots")
+
+##generating objects/variables necessary for sample distance heatmaps
+##note that most of these do not need to be changed, with the exception of your appropriate group specified in your design file [for me, "genotype"])
+distsStageRL <- dist(t(assay(dds_rld)))
+gene_stage_mat <- as.matrix(distsStageRL)
+rownames(gene_stage_mat) <- colnames(gene_stage_mat) <- with(colData(gdds),paste(genotype, sep=" : "))
+g_stage_col <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+hc1 <- hclust(distsStageRL)
+
+##generating heatmap
+heatmap.2(gene_stage_mat, Rowv=as.dendrogram(hc1), symm=TRUE, trace="none", col = rev(g_stage_col), margin=c(13,13))
+
+##generating subset of DE results for individual comparisons (for me, the "genotype" design, comparing MVKKO vs MVWT; could also be something like "tissue" design comparing liver vs kidney or liver vs testis [whatever is labeled in your file]")
+res <- results(gdds_de, contrast=c("condition","A","B"))
+
+##writing DE results to CSV file
+write.csv(res, file="KD_SC_DEseq_rep1_3_0220.csv")
