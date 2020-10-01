@@ -5,7 +5,7 @@ GeneCountDataInt <- as.matrix(GeneCountData)
 storage.mode(GeneCountDataInt) = "integer"
 
 GeneCountDataInt2<-GeneCountDataInt[,c(1,3,4,6)]
-GeneCountDataInt3<-GeneCountDataInt[,c(1,4,5,6,8,9)]
+#GeneCountDataInt3<-GeneCountDataInt[,c(1,4,5,6,8,9)]
 
 ##Loading in your design file (see above)
 Design <- read.delim("comsample.txt", header = TRUE, sep = "\t", row.names = 1)
@@ -49,9 +49,23 @@ pheatmap(sampleDistMatrix,
          col=colors)
 
 #MA plot
-plotMA(res, ylim=c(-5,5))
+#plotMA(res, ylim=c(-5,5))
+wantgene <- row.names(res)[which(res$padj < 0.05 & res$log2FoldChange > 1)]
+wantgene
+wantgene2 <- row.names(res)[which(res$padj < 0.05 & res$log2FoldChange < -1)]
+wantgene2
+wantgene3 <- c(wantgene, wantgene2)
 
+wantgene_manual <- c("ENSDARG00000028148", "ENSDARG00000031222", "ENSDARG00000074253",  "BHIKHARI_I-int:LTR:LTR", "BHIKHARI_LTR:LTR:LTR")
+names(wantgene_manual)
 
+plotMA(res, ylim=c(-4,4))
+with(res[wantgene_manual, ], {
+  points(baseMean, log2FoldChange, col="grey", cex=2, lwd=2)
+  
+})
+
+text(baseMean, log2FoldChange, text(baseMean, log2FoldChange, wantgene_manual, pos=2, col="dodgerblue"), pos=2, col="dodgerblue")
 
 ##loading in necessary software to generate sample distance heatmaps
 library("RColorBrewer")
