@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-GeneCountData <- read.delim("all.fc.count", header = TRUE, sep = "\t", row.names = 1)
+GeneCountData <- read.delim("all_bik_123.fc.count", header = TRUE, sep = "\t", row.names = 1)
 ##processes file to make sure that it is in the right format
 GeneCountDataInt <- as.matrix(GeneCountData)
 storage.mode(GeneCountDataInt) = "integer"
@@ -19,6 +19,13 @@ storage.mode(GeneCountDataInt) = "integer"
 ```{r}
 head(GeneCountDataInt)
 ```
+
+```{r}
+GeneCountDataInt2<-GeneCountDataInt[,c(1,2,3,4)]
+head(GeneCountDataInt2)
+```
+
+
 
 
 ##Loading in your design file (see above)
@@ -36,7 +43,7 @@ library("DESeq2")
 ##generating a DESeq dataset matrix object using the counts and design input files
 
 ```{r}
-gdds <- DESeqDataSetFromMatrix(countData = GeneCountDataInt, colData = Design, design = ~ condition)
+gdds <- DESeqDataSetFromMatrix(countData = GeneCountDataInt2, colData = Design, design = ~ condition)
 ```
 
 ##performing DE analysis
@@ -132,5 +139,5 @@ res <- results(gdds_de, contrast=c("condition","A","B"))
 ##writing DE results to CSV file
 
 ```{r}
-write.csv(res, file="KD_SC_DEseq_rep1_3_fc_1020.csv")
+write.csv(res, file="KD_SC_DEseq_Exp_fc_allbik_1021.csv")
 ```

@@ -1,10 +1,6 @@
 sample	condition
 Exp1_L4	A
+Exp2_L4	B
+Exp2_L2	B
 Exp3_L4	A
-Sc1_L2	B
-Sc1_L4	B
-Sc3_L2	B
-Sc3_L4	B
-Exp2_L2 A
-Exp2_L4 A
-Sc2_L4	B
+
