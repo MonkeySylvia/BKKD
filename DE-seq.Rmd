@@ -1,0 +1,236 @@
+---
+title: "DE-seq on 8 samples"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, eval=FALSE}
+setwd("/Volumes/Junybug/BKKD_Junybug/2nd/")
+GeneCountData <- read.delim("allgene.fc.count", sep = "\t", row.names = 1)
+```
+
+*processes file to make sure that it is in the right format*
+```{r,eval=FALSE}
+GeneCountDataInt <- as.matrix(GeneCountData)
+storage.mode(GeneCountDataInt) = "integer"
+```
+
+GeneCountDataInt2<-GeneCountDataInt[,c(1,3,4,6)]
+#GeneCountDataInt3<-GeneCountDataInt[,c(1,4,5,6,8,9)]
+
+*Loading in your design file*
+```{r,eval=FALSE}
+Design <- read.delim("sample.txt", header = TRUE, sep = "\t", row.names = 1)
+```
+
+
+*Loading "DEseq2" software*
+
+```{r,eval=FALSE}
+library("DESeq2")
+```
+
+*generating a DESeq dataset matrix object using the counts and design input files*
+
+```{r,eval=FALSE}
+gdds <- DESeqDataSetFromMatrix(countData = GeneCountDataInt, colData = Design, design = ~ condition + time)
+```
+
+*performing DE analysis*
+
+```{r,eval=FALSE}
+gdds_de <- DESeq(gdds)
+```
+
+*generating normalized counts for each gene or transcript for plots*
+
+```{r,eval=FALSE}
+dds_rld <- rlog(gdds)
+```
+
+*plots PCA of samples using the groups specified in your design file (for me, genotype and serum)*
+```{r,eval=FALSE}
+plotPCA(dds_rld, intgroup=c("condition", "time"))
+```
+
+
+res <- results(gdds_de, contrast=c("condition","Exp","Sc"),alpha=0.05)
+##tells you total # of genes DE at adj. p < 0.1 level
+summary(res)
+plotMA(res, ylim=c(-5,5))
+
+write.csv(res, file="testwolalal.csv")
+
+
+
+**It looks good. It separates conditions and time.**
+<br>
+*now lets do 8hpf only*
+
+**8hpf**
+```{r ,eval=FALSE}
+GeneCountDataInt2<-GeneCountDataInt[,c(1,4,5,8)]
+head(GeneCountDataInt2)
+```
+
+```{r ,eval=FALSE}
+Design2 <-Design[c(1,4,5,8),]
+```
+
+```{r ,eval=FALSE}
+gdds2 <- DESeqDataSetFromMatrix(countData = GeneCountDataInt2, colData = Design2, design = ~ condition+ batch)
+
+gdds_de2 <- DESeq(gdds2)
+
+dds_rld2 <- rlog(gdds2)
+
+plotPCA(dds_rld2, intgroup=c("condition"))
+```
+
+
+*generating a results object from DE analysis*
+```{r,eval=FALSE}
+#dds_res2 <- results(gdds_de2)
+res2 <- results(gdds_de2, contrast=c("condition","Exp","Sc"),alpha=0.05)
+##tells you total # of genes DE at adj. p < 0.1 level
+summary(res2)
+```
+
+*MA plt*
+```{r,eval=FALSE}
+plotMA(res2, ylim=c(-5,5))
+```
+
+
+**writing DE results to CSV file**
+```{r}
+write.csv(res2, file="KD_2nd_batch_0127.csv")
+```
+
+
+ENSDARG00000096249	1667.316437	0.545069824	0.132211166	4.122721561	3.74E-05	0.049617547	ap1m1
+ENSDARG00000004836	1674.451929	0.622065232	0.138472794	4.492328165	7.04E-06	0.01983837	dnajc5ab
+ENSDARG00000086374	1259.103691	0.677173066	0.164198443	4.1241138	3.72E-05	0.049617547	isg15
+ENSDARG00000075343	560.3538885	0.864429811	0.207593464	4.164051199	3.13E-05	0.049617547	csf1a
+ENSDARG00000043236	196.5677427	1.466570545	0.331092721	4.429485918	9.45E-06	0.023643882	ccna1
+
+**12hpf**
+```{r,eval=FALSE}
+GeneCountDataInt3<-GeneCountDataInt[,c(2,3,6,7)]
+head(GeneCountDataInt3)
+```
+
+```{r,eval=FALSE}
+Design3 <-Design[c(2,3,6,7),]
+```
+
+```{r,eval=FALSE}
+gdds3 <- DESeqDataSetFromMatrix(countData = GeneCountDataInt3, colData = Design3, design = ~ condition+batch)
+
+gdds_de3 <- DESeq(gdds3)
+
+dds_rld3 <- rlog(gdds3)
+
+plotPCA(dds_rld3, intgroup=c("condition"))
+```
+
+
+*generating a results object from DE analysis*
+```{r,eval=FALSE}
+#dds_res2 <- results(gdds_de2)
+res3 <- results(gdds_de3, contrast=c("condition","Exp","Sc"),alpha=0.05)
+##tells you total # of genes DE at adj. p < 0.1 level
+summary(res3)
+```
+*MA plt*
+```{r,eval=FALSE}
+plotMA(res3, ylim=c(-5,5))
+```
+**writing DE results to CSV file**
+```{r}
+write.csv(res3, file="KD_2nd_12hpf_batch_0127.csv")
+```
+ENSDARG00000030440	4575.361367	0.629307184	0.086731622	7.255798651	3.99E-13	1.04E-08	rsrp1
+ENSDARG00000099970	5553.846383	0.401157051	0.082023427	4.890761909	1.00E-06	0.013024885	
+ENSDARG00000051939	10272.18182	-0.327971838	0.07208994	-4.549481359	5.38E-06	0.046489546	pcxb
+ENSDARG00000020893	6376.430543	0.34166484	0.079372334	4.304583501	1.67E-05	0.108469074	slc25a55a
+ENSDARG00000076805	3358.793205	0.380909097	0.095214658	4.000530008	6.32E-05	0.327809764	leng8
+ENSDARG00000035519	7960.679482	-0.303491642	0.077758425	-3.903006572	9.50E-05	0.410643806	Histone H1 like
+ENSDARG00000039666	1158.554776	-0.563006528	0.148417834	-3.793388663	0.000148605	0.550561327	tsta3
+
+
+
+
+**heatmap**
+```{r,eval=FALSE}
+library("pheatmap")
+sampleDists <- dist(t(assay(dds_rld2)))
+library("RColorBrewer")
+sampleDists <- dist(t(assay(dds_rld2)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(dds_rld2$replicate, vsd$type, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+
+
+
+
+*my heatmap*
+library("pheatmap")
+sampleDists <- dist(t(assay(dds_rld)))
+library("RColorBrewer")
+sampleDists <- dist(t(assay(dds_rld)))
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(dds_rld$replicate, vsd$type, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+
+*MA plot
+#plotMA(res, ylim=c(-5,5))
+wantgene <- row.names(res)[which(res$padj < 0.05 & res$log2FoldChange > 1)]
+wantgene
+wantgene2 <- row.names(res)[which(res$padj < 0.05 & res$log2FoldChange < -1)]
+wantgene2
+wantgene3 <- c(wantgene, wantgene2)
+
+wantgene_manual <- c("ENSDARG00000028148", "ENSDARG00000031222", "ENSDARG00000074253",  "BHIKHARI_I-int:LTR:LTR", "BHIKHARI_LTR:LTR:LTR")
+names(wantgene_manual)
+
+plotMA(res, ylim=c(-4,4))
+with(res[wantgene_manual, ], {
+  points(baseMean, log2FoldChange, col="grey", cex=2, lwd=2)
+  
+})
+
+text(baseMean, log2FoldChange, text(baseMean, log2FoldChange, wantgene_manual, pos=2, col="dodgerblue"), pos=2, col="dodgerblue")
+
+*loading in necessary software to generate sample distance heatmaps
+library("RColorBrewer")
+library("gplots")
+
+##generating objects/variables necessary for sample distance heatmaps
+##note that most of these do not need to be changed, with the exception of your appropriate group specified in your design file [for me, "genotype"])
+distsStageRL <- dist(t(assay(dds_rld)))
+gene_stage_mat <- as.matrix(distsStageRL)
+rownames(gene_stage_mat) <- colnames(gene_stage_mat) <- with(colData(gdds),paste(genotype, sep=" : "))
+g_stage_col <- colorRampPalette(brewer.pal(9, "GnBu"))(100)
+hc1 <- hclust(distsStageRL)
+
+*generating heatmap*
+heatmap.2(gene_stage_mat, Rowv=as.dendrogram(hc1), symm=TRUE, trace="none", col = rev(g_stage_col), margin=c(13,13))
+
+*generating subset of DE results for individual comparisons (for me, the "genotype" design, comparing MVKKO vs MVWT; could also be something like "tissue" design comparing liver vs kidney or liver vs testis [whatever is labeled in your file]")*
+res <- results(gdds_de, contrast=c("condition","A","B"))
+

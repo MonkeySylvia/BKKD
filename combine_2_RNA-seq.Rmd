@@ -1,0 +1,138 @@
+---
+title: "combine 2 RNA-seq"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+combine 2 cnTable
+join -11 -21 ../all.combine.cntTable 8samples.cntTable | sed 's/ /\t/g' > 2_RNA-seq.cnTable
+
+
+```{r, eval=FALSE}
+setwd("/Volumes/Junybug/BKKD_Junybug/2nd/")
+GeneCountData <- read.delim("2_RNA-seq.cnTable", sep = "\t", row.names = 1)
+```
+
+*processes file to make sure that it is in the right format*
+```{r,eval=FALSE}
+GeneCountDataInt <- as.matrix(GeneCountData)
+storage.mode(GeneCountDataInt) = "integer"
+
+GeneCountDataInt2<-GeneCountDataInt[,c(1:7,10,11,14)]
+```
+
+*Loading in your design file*
+```{r,eval=FALSE}
+setwd("/Volumes/Junybug/BKKD_Junybug/2nd/")
+Designcom <- read.delim("comsample.txt", header = TRUE, sep = "\t", row.names = 1)
+```
+
+
+*Loading "DEseq2" software*
+
+```{r,eval=FALSE}
+library("DESeq2")
+```
+
+*generating a DESeq dataset matrix object using the counts and design input files*
+
+```{r,eval=FALSE}
+gdds <- DESeqDataSetFromMatrix(countData = GeneCountDataInt2, colData = Designcom, design = ~ condition + batch)
+```
+
+*performing DE analysis*
+
+```{r,eval=FALSE}
+gdds_de <- DESeq(gdds)
+```
+
+*generating normalized counts for each gene or transcript for plots*
+
+```{r,eval=FALSE}
+dds_rld <- rlog(gdds)
+```
+
+*plots PCA of samples using the groups specified in your design file (for me, genotype and serum)*
+```{r,eval=FALSE}
+plotPCA(dds_rld, intgroup=c("condition", "time"))
+```
+
+**heatmap**
+```{r,eval=FALSE}
+library("pheatmap")
+sampleDists <- dist(t(assay(dds_rld)))
+library("RColorBrewer")
+sampleDists <- dist(t(assay(dds_rld)))
+sampleDistMatrix <- as.matrix(sampleDists)
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+
+```
+
+#remove exp2 and sc2
+```{r}
+GeneCountDataInt2<-GeneCountDataInt2[,c(1,3,4,6,7:10)]
+Designcom2 <- Designcom[c(1,3,4,6,7:10),]
+```
+
+```{r}
+gdds2 <- DESeqDataSetFromMatrix(countData = GeneCountDataInt2, colData = Designcom2, design = ~ condition + batch)
+
+gdds_de2 <- DESeq(gdds2)
+
+dds_rld2 <- rlog(gdds2)
+```
+**heatmap**
+```{r,eval=FALSE}
+
+sampleDists <- dist(t(assay(dds_rld2)))
+sampleDists <- dist(t(assay(dds_rld2)))
+sampleDistMatrix <- as.matrix(sampleDists)
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+
+```
+*generating a results object from DE analysis*
+```{r,eval=FALSE}
+#dds_res2 <- results(gdds_de2)
+res2 <- results(gdds_de2, contrast=c("condition","Exp","Sc"),alpha=0.05)
+##tells you total # of genes DE at adj. p < 0.1 level
+summary(res2)
+```
+
+*MA plt*
+```{r,eval=FALSE}
+plotMA(res2, ylim=c(-5,5))
+```
+
+
+```{r}
+write.csv(res2, file="KD_2combine_batch_0127.csv")
+```
+
+
+	baseMean	log2FoldChange	lfcSE	stat	pvalue	padj	
+ENSDARG00000096215	220.7796244	-2.248934225	0.201890848	-11.13935696	8.07E-29	2.17E-24	CR293502.1
+BHIKHARI_LTR:LTR:LTR	22029.8429	-2.524705648	0.237652985	-10.62349648	2.32E-26	3.11E-22	
+ENSDARG00000039666	2128.637185	-1.222645972	0.119677888	-10.21613923	1.68E-24	1.50E-20	tsta3
+BHIKHARI_I-int:LTR:LTR	31309.27214	-3.089959218	0.307172962	-10.05934635	8.36E-24	5.61E-20	
+ENSDARG00000037589	2498.577629	-0.799274058	0.084538365	-9.454571975	3.24E-21	1.74E-17	gid8b
+DNA-8-3_DR:DNA:DNA	2496.45892	-0.718923203	0.085358189	-8.422428061	3.69E-17	1.65E-13	
+ENSDARG00000094149	53.89010334	-2.348146299	0.336419893	-6.979808112	2.96E-12	1.13E-08	BX323875.1
+ENSDARG00000061294	3507.405074	-0.822199906	0.121342477	-6.775862227	1.24E-11	4.15E-08	arhgap5
+ENSDARG00000096249	779.9005513	0.560578186	0.102735686	5.456508881	4.86E-08	0.000145007	ap1m1
+ENSDARG00000036090	655.1910062	-0.495402721	0.111611538	-4.438633588	9.05E-06	0.02297853	pard6gb
+TDR9:DNA:DNA	1207.694398	-0.414144575	0.093477421	-4.43042361	9.40E-06	0.02297853	
+ENSDARG00000004836	795.6063612	0.467014772	0.115813918	4.032458086	5.52E-05	0.123621676	dnajc5ab
+
